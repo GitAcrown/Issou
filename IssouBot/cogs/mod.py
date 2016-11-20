@@ -155,7 +155,7 @@ class Mod:
             logger.info("{}({}) a kick {}({})".format(
                 author.name, author.id, user.name, user.id))
             await self.new_case(server,
-                                action="Kick \N{WOMAN BOOTS}",
+                                action="Kick \N{WOMANS BOOTS}",
                                 mod=author,
                                 user=user)
             await self.bot.say("Fait.")
@@ -181,7 +181,7 @@ class Mod:
             logger.info("{}({}) banned {}({}), deleting {} days worth of messages".format(
                 author.name, author.id, user.name, user.id, str(days)))
             await self.new_case(server,
-                                action="Banv \N{HAMMER}",
+                                action="Ban \N{HAMMER}",
                                 mod=author,
                                 user=user)
             await self.bot.say("Fait.")
@@ -876,7 +876,7 @@ class Mod:
 
     @_filter.command(name="add", pass_context=True)
     async def filter_add(self, ctx, *words: str):
-        """Ajoute une chaine de caractères au filtre.""""
+        """Ajoute une chaine de caractères au filtre."""
         if words == ():
             await send_cmd_help(ctx)
             return
@@ -896,7 +896,7 @@ class Mod:
 
     @_filter.command(name="remove", pass_context=True)
     async def filter_remove(self, ctx, *words: str):
-        """Retire un filtre""""
+        """Retire un filtre"""
         if words == ():
             await send_cmd_help(ctx)
             return
