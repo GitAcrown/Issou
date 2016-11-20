@@ -581,16 +581,16 @@ class Owner:
         about = (
             "Session de [Issou, un bot pour Discord]({}) "
             "créé par [Acrown]({}) et adapté partiellement de Red.\n\n"
-            "Ce bot est originaire d'un serveur particulier. [Rejoignez-nous !]({})\n"
+            "Ce bot est adapté pour serveur en particulier. [Rejoignez-nous !]({})\n"
             "".format(red_repo, author_repo, server_url))
 
-        embed = discord.Embed(colour=discord.Colour.red())
+        embed = discord.Embed(colour=discord.Colour.blue())
         embed.add_field(name="Session par", value=str(owner))
         embed.add_field(name="Python", value=py_version)
         embed.add_field(name="discord.py", value=dpy_version)
         embed.add_field(name="A propos de Issou", value=about, inline=False)
-        embed.set_footer(text="Apporte de la joie depuis le 26 Avril (au moins "
-                         "{} jours depuis!)".format(days_since))
+        embed.set_footer(text="Apporte de la joie depuis le 26 Avril 2016 ("
+                         "{} jours d'existence!)".format(days_since))
 
         try:
             await self.bot.say(embed=embed)
@@ -672,7 +672,7 @@ class Owner:
         ncommits = os.popen(r'git rev-list --count HEAD').read()
 
         lines = commits.read().split('\n')
-        embed = discord.Embed(title="Mise à jour de " + repo_name,
+        embed = discord.Embed(title="Mise à jour" + repo_name,
                               description="Dernières MAJ ",
                               colour=discord.Colour.red(),
                               url=url)
