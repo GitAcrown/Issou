@@ -314,7 +314,7 @@ class Economy:
         if offre != None:
             if self.bank.account_exists(author):
                 balance = self.bank.get_balance(author)
-                minimum = balance * 0.02
+                minimum = int(balance * 0.02)
                 if offre >= minimum:
                     if self.bank.can_spend(author, offre):
                         chance = random.randint(1, 15)
