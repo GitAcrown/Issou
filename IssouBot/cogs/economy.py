@@ -10,6 +10,7 @@ from __main__ import send_cmd_help
 import os
 import time
 import logging
+import random
 
 #Modifié
 
@@ -219,9 +220,9 @@ class Economy:
             await self.bot.say("{} Tu as déjà un compte Bank.".format(user.mention))
 
     async def auto_register(self, message): #Enregistre automatiquement
-        user = message.author
         server = message.server
         if server != None:
+            user = message.author
             try:
                 account = self.bank.create_account(user)
             except AccountAlreadyExists:
@@ -317,7 +318,7 @@ class Economy:
                 minimum = int(balance * 0.02)
                 if offre >= minimum:
                     if self.bank.can_spend(author, offre):
-                        chance = random.randint(1, 15)
+                        chance = random.randint(1, 12)
                         if chance == 1:
                             await self.bot.say("**Bravo {} !** Tu as gagné le montant du Jackpot !".format(author.mention))
                             gain = self.settings[server.id]["JACKPOT"] - minimum
