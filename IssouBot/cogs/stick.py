@@ -14,7 +14,7 @@ from PIL import Image
 from PIL import ImageDraw
 import sys
 
-#Freya Exclusive
+#Exclusif
 
 default_img = {"IMG" : {}, "CAT" : {}}
 memedir = "data/stock/memedir/"
@@ -42,6 +42,26 @@ class Stock:
             msg += "```"
             await self.bot.say(msg)
 
+    @imgset.command(pass_context=True, no_pm=True)
+    async def reloadcat(self, ctx):
+        """Permet de recharger les catégories, utile en cas de MAJ du module."""
+        if "URLONLY" in self.img["CAT"]:
+            if"AUTRES" in self.img["CAT"]:
+                if "INTEGRE" in self.img["CAT"]:
+                    await self.bot.say("Toutes les catégories sont déjà chargées.")
+                else:
+                    await self.bot.say("Création de la catégorie par défaut 'INTEGRE'\n*Les images placées dedans seront affichés en version Integré*")
+                    self.img["CAT"]["INTEGRE"] = {"NOM" : "INTEGRE", "DESC" : "Une plus belle façon d'afficher des liens."}
+                    fileIO("data/stock/img.json", "save", self.img)
+            else:
+                await self.bot.say("Création de la catégorie par défaut 'AUTRES'\n*Les images sans catégories seront placés dedans.*")
+                self.img["CAT"]["AUTRES"] = {"NOM" : "AUTRES", "DESC" : "Images sans catégories."}
+                fileIO("data/stock/img.json", "save", self.img)
+        else:
+            await self.bot.say("Création de la catégorie par défaut 'URLONLY'\n*Placez des images dedans pour que le bot n'affiche que les URL plutôt que de les upload.*")
+            self.img["CAT"]["URLONLY"] = {"NOM" : "URLONLY", "DESC" : "Seulement les URLs."}
+            fileIO("data/stock/img.json", "save", self.img)
+
     @imgset.command(pass_context=True, no_pm=True, hidden=True)
     @checks.mod_or_permissions(kick_members=True)
     async def erase(self):
@@ -56,7 +76,7 @@ class Stock:
         """Ajoute une catégorie au module."""
         nom = nom.upper()
         descr = " ".join(descr)
-        if "URLONLY" in self.img["CAT"] and "AUTRES" in self.img["CAT"]:
+        if "URLONLY" in self.img["CAT"] and "AUTRES" in self.img["CAT"] and "INTEGRE" in self.img["CAT"]:
             if descr != "":
                 if nom not in self.img["CAT"]:
                     self.img["CAT"][nom] = {"NOM" : nom, "DESC" : descr}
@@ -73,6 +93,9 @@ class Stock:
             await asyncio.sleep(1)
             await self.bot.say("Création de la catégorie par défaut 'AUTRES'\n*Les images sans catégories seront placés dedans.*")
             self.img["CAT"]["AUTRES"] = {"NOM" : "AUTRES", "DESC" : "Images sans catégories."}
+            await asyncio.sleep(1)
+            await self.bot.say("Création de la catégorie par défaut 'INTEGRE'\n*Les images placées dedans seront affichés en version Integré*")
+            self.img["CAT"]["INTEGRE"] = {"NOM" : "INTEGRE", "DESC" : "Une plus belle façon d'afficher des liens."}
             fileIO("data/stock/img.json", "save", self.img)
         
 
@@ -87,6 +110,9 @@ class Stock:
                 fileIO("data/stock/img.json", "save", self.img)
             if "URLONLY" not in self.img["CAT"]:
                 self.img["CAT"]["URLONLY"] = {"NOM" : "URLONLY", "DESC" : "Seulement les URLs."}
+                fileIO("data/stock/img.json", "save", self.img)
+            if "INTEGRE" not in self.img["CAT"]:
+                self.img["CAT"]["INTEGRE"] = {"NOM" : "INTEGRE", "DESC" : "Une plus belle façon d'afficher des liens."}
                 fileIO("data/stock/img.json", "save", self.img)
             for image in self.img["IMG"]:
                 if self.img["IMG"][image]["CAT"] == nom:
@@ -122,7 +148,6 @@ class Stock:
                     self.img["IMG"][nom] = {"NOM" : nom, "CHEMIN": file, "URL": url, "CAT": cat}
                     fileIO("data/stock/img.json", "save", self.img)
                     await self.bot.say("**Fichier {} enregistré localement**".format(filename))
-                    await self.bot.send_file(ctx.message.channel, file)
                 except Exception as e:
                     print("Erreur, impossible de télécharger l'image : {}".format(e))
                     await self.bot.say("Désolé, mais cette image ne peut pas être téléchargée.")
@@ -220,23 +245,39 @@ class Stock:
                 for img in output:
                     if img in self.img["IMG"]:
                         if self.img["IMG"][img]["CAT"] != "URLONLY":
-                            chemin = self.img["IMG"][img]["CHEMIN"]
-                            url = self.img["IMG"][img]["URL"]
-                            try:
-                                await self.bot.send_file(channel, chemin)
-                            except Exception as e:
-                                print("Erreur, impossible d'upload l'image : {}".format(e))
-                                print("Je vais envoyer l'URL liée à la place.")
+                            if self.img["IMG"][img]["CAT"] != "INTEGRE":
+                                chemin = self.img["IMG"][img]["CHEMIN"]
+                                url = self.img["IMG"][img]["URL"]
+                                try:
+                                    await self.bot.send_file(channel, chemin)
+                                except Exception as e:
+                                    print("Erreur, impossible d'upload l'image : {}".format(e))
+                                    print("Je vais envoyer l'URL liée à la place.")
+                                    if url != None:
+                                        await self.bot.send_message(channel, url)
+                                    else:
+                                        print("Je n'ai pas le lien non plus...")
+                            else:
+                                url = self.img["IMG"][img]["URL"]
                                 if url != None:
-                                    await self.bot.send_message(channel, url)
-                                else:
-                                    print("Je n'ai pas le lien non plus...")
+                                    if ".png" in url:
+                                        em = discord.Embed(colour=discord.Colour.dark_teal())
+                                    elif ".jpg" in url:
+                                        em = discord.Embed(colour=discord.Colour.dark_green())
+                                    elif ".jpeg" in url:
+                                        em = discord.Embed(colour=discord.Colour.dark_blue())
+                                    elif ".gif" in url:
+                                        em = discord.Embed(colour=discord.Colour.dark_gold())
+                                    else:
+                                        em = discord.Embed(colour=discord.Colour.light_grey())
+                                    em.set_image(url=url)
+                                    await self.bot.send_message(channel, embed=em)
                         else:
                             url = self.img["IMG"][img]["URL"]
                             if url != None:
                                 await self.bot.send_message(channel, url)
                             else:
-                                print("Image en catégorie 'URLONLY'.")
+                                print("Il n'y a pas d'URL lié à l'image demandée.")
                     elif img in self.meme:
                         chemin = self.meme[img]["CHEMIN"]
                         try:
@@ -442,8 +483,6 @@ def get_lower(somedata):
 		result = somedata.lower()		
 
 	return result
-
-
 
 if __name__ == '__main__':
 
