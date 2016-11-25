@@ -77,6 +77,16 @@ class General:
             await self.bot.send_file(channel, chemin)
         except:
             await self.bot.say("Impossible d'upload le fichier.")
+
+    @commands.command(pass_context=True, hidden=True)
+    @checks.admin_or_permissions(kick_members=True)
+    async def dbgdel(self, ctx):
+        """Vide le fichier de logs du bot."""
+        channel = ctx.message.channel
+        chemin = 'data/red/red.log'
+        with open(chemin, 'w'):
+            pass
+        await self.bot.say("Le fichier de log est vidé.")
         
     @commands.command(pass_context=True)
     async def roll(self, ctx, number : int = 100):
