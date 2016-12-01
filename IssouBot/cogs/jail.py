@@ -369,11 +369,12 @@ class Jail:
         Cette commande crée une liste des mentionnés et renvoie un ID de modération."""
         ment = ctx.message.mentions
         server = ctx.message.server
+        author = ctx.message.author
         nb = ["0","1","2","3","4","5","6","7","8","9"]
         id = self.gen_code()
         msg = "__**Ajoutés à la liste n°** *{}*__\n".format(id)
         if id not in self.vig:
-            self.vig[id] = {"ID" : id,"LISTE" : []}
+            self.vig[id] = {"ID" : id,"LISTE" : [], "CREATEUR" : author.id}
             con = ctx.message.content
             el = con.split()
             if ment != []:
@@ -421,6 +422,26 @@ class Jail:
 
     @vigil.command(pass_context=True)
     @checks.mod_or_permissions(ban_members=True)
+    async def rem(self, ctx, liste):
+        """Supprime une liste si vous en êtes l'auteur."""
+        liste = liste.upper()
+        for id in self.vig:
+            if liste in id:
+                nom = id[-4:]
+                if self.vig[id]["CREATOR"] == ctx.message.author.id:
+                    del self.vig[id]
+                    await self.bot.say("Liste **{}** supprimée.".format(nom))
+                    fileIO("data/jail/vig.json", "save", self.vig)
+                    return
+                else:
+                    await self.bot.whisper("Vous n'êtes pas le créateur de cette liste.")
+            else:
+                pass
+        else:
+            await self.bot.whisper("Aucune liste ne porte ce nom.")
+
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(ban_members=True)
     async def lst(self, ctx, liste = None):
         """Permet d'afficher les utilisateurs présents dans une liste.
 
@@ -453,11 +474,24 @@ class Jail:
 
     @vigil.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
-    async def wpe(self, ctx):
-        """Efface l'ensemble des listes Vigilance."""
-        self.vig = {}
-        fileIO("data/jail/vig.json", "save", self.vig)
-        await self.bot.say("Vidé.")
+    async def wpe(self, ctx, liste = None):
+        """Efface une/des liste(s) Vigilance en outre-passant les droits (Admin)."""
+        if liste != None:
+            for id in self.vig:
+                if liste in id:
+                    nom = id[-4:]
+                    del self.vig[id]
+                    await self.bot.say("Liste **{}** supprimée.".format(nom))
+                    fileIO("data/jail/vig.json", "save", self.vig)
+                    return
+                else:
+                    pass
+            else:
+                await self.bot.whisper("Aucune liste de ce nom existe.")
+        else:
+            self.vig = {}
+            fileIO("data/jail/vig.json", "save", self.vig)
+            await self.bot.say("Vidé entièrement.")
 
     @vigil.command(pass_context=True)
     @checks.mod_or_permissions(administrator=True)
