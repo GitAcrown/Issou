@@ -7,6 +7,8 @@ import random
 from cogs.utils.dataIO import fileIO, dataIO
 from __main__ import send_cmd_help, settings
 
+default = {"DETECT_ACTIF" : False, "DETECT_CHAN" : None, "DETECT_LIST" : None}
+
 class Jail:
     """Collection d'actions de punition."""
 
@@ -14,6 +16,8 @@ class Jail:
         self.bot = bot
         self.prfl = dataIO.load_json("data/puser/prfl.json")
         self.sys = dataIO.load_json("data/jail/sys.json")
+        self.vig = dataIO.load_json("data/jail/vig.json")
+        self.vigset = dataIO.load_json("data/jail/vigset.json")
         self.scenario = [["Vous tentez de scier les barreaux avec un couteau récupéré à la cantine. (-10%)", 10],
                          ["Vous essayez de creuser le mur fissuré avec une cuillère. (-15%)", 15],
                          ["Vous essayez d'assomer le gardien. (-10%)", 10],
@@ -26,7 +30,7 @@ class Jail:
 
     @commands.group(pass_context=True)
     async def jail(self, ctx):
-        """Gestion du profil."""
+        """Gestion de la prison."""
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
             msg = "```"
@@ -343,6 +347,220 @@ class Jail:
                 await self.bot.whisper("Vous êtes maintenant inscrit à ma base de données.")
         else:
             await self.bot.say("Vous n'êtes pas prisonnier !")
+
+    #------------- MODPLUS ----------------------------------------------------------
+
+    @commands.group(pass_context=True)
+    async def vigil(self, ctx):
+        """Gestion de Vigilance."""
+        if ctx.invoked_subcommand is None:
+            await send_cmd_help(ctx)
+            msg = "```"
+            for k, v in settings.get_server(ctx.message.server).items():
+                msg += str(k) + ": " + str(v) + "\n"
+            msg += "```"
+            await self.bot.say(msg)
+            
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(ban_members=True)
+    async def crt(self, ctx):
+        """Ajoute des utilisateurs à Vigilance.
+
+        Cette commande crée une liste des mentionnés et renvoie un ID de modération."""
+        ment = ctx.message.mentions
+        server = ctx.message.server
+        nb = ["0","1","2","3","4","5","6","7","8","9"]
+        id = self.gen_code()
+        msg = "__**Ajoutés à la liste n°** *{}*__\n".format(id)
+        if id not in self.vig:
+            self.vig[id] = {"ID" : id,"LISTE" : []}
+            con = ctx.message.content
+            el = con.split()
+            if ment != []:
+                for user in ment:
+                    self.vig[id]["LISTE"].append(user.id)
+                    msg += "**{}** ajouté\n".format(user.name)
+                    fileIO("data/jail/vig.json", "save", self.vig)
+            else:
+                for e in el: #Recherche d'ID
+                    if set(nb) & set(e) != set():
+                        user = server.get_member(e)
+                        self.vig[id]["LISTE"].append(user.id)
+                        msg += "**{}** ajouté\n".format(user.name)
+                        fileIO("data/jail/vig.json", "save", self.vig)
+                    else:
+                        pass
+            if msg != "**Ajoutés à la liste n°{}**\n".format(id):
+                await self.bot.whisper(msg)
+                name = id[-4:]
+                await self.bot.say("Liste **{}** créé.".format(name))
+            else:
+                await self.bot.whisper("Vous n'avez spécifié personne dans votre liste.")
+        else:
+            await self.bot.say("La liste crée existe déjà, réesayez plus tard.")
+            
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(ban_members=True)
+    async def ajt(self, ctx, liste, user : discord.Member):
+        """Permet d'ajouter un utilisateur à une liste existante."""
+        liste = liste.upper()
+        for id in self.vig:
+            if liste in id:
+                nom = id[-4:]
+                if user.id not in self.vig[id]["LISTE"]:
+                    self.vig[id]["LISTE"].append(user.id)
+                    await self.bot.whisper("**{}** ajouté à la liste **{}**".format(user.name, nom))
+                    fileIO("data/jail/vig.json", "save", self.vig)
+                    return
+                else:
+                    await self.bot.whisper("Utilisateur déjà présent.")
+            else:
+                pass
+        else:
+            await self.bot.whisper("Aucune liste ne porte ce nom.")
+
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(ban_members=True)
+    async def lst(self, ctx, liste = None):
+        """Permet d'afficher les utilisateurs présents dans une liste.
+
+        Si aucune liste n'est spécifiée, affiche les listes disponibles."""
+        server = ctx.message.server
+        if liste != None:
+            liste = liste.upper()
+            for id in self.vig:
+                if liste in id:
+                    nom = id[-4:]
+                    msg = "**Liste {}**\n".format(nom)
+                    for u in self.vig[id]["LISTE"]:
+                        user = server.get_member(u)
+                        msg += "*{}*\n".format(user.name)
+                    await self.bot.whisper(msg)
+                    return
+                else:
+                    pass
+            else:
+                await self.bot.whisper("Aucune liste de ce nom existe.")
+        else:
+            msg = "**Listes disponibles:**\n"
+            for id in self.vig:
+                nom = id[-4:]
+                msg += "*{}*\n".format(nom)
+            if msg != "**Listes disponibles:**\n":
+                await self.bot.whisper(msg)
+            else:
+                await self.bot.whisper("Aucune liste à afficher.")
+
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
+    async def wpe(self, ctx):
+        """Efface l'ensemble des listes Vigilance."""
+        self.vig = {}
+        fileIO("data/jail/vig.json", "save", self.vig)
+        await self.bot.say("Vidé.")
+
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(administrator=True)
+    async def sec(self, ctx, liste):
+        """Permet de voir le code de sécurité lié à une liste et les utilisateurs qui sont dedans."""
+        server = ctx.message.server
+        for id in self.vig:
+            if liste in id:
+                nom = id[-4:]
+                msg = "**Liste {} (__{}__)**\n".format(nom, id)
+                for u in self.vig[id]["LISTE"]:
+                    user = server.get_member(u)
+                    msg += "*{}*\n".format(user.name)
+                await self.bot.whisper(msg)
+                return
+            else:
+                pass
+        else:
+            await self.bot.whisper("Aucune liste de ce nom existe.")
+
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(ban_members=True)
+    async def mod(self, ctx, listec, temps: int= 5):
+        """Permet la modération (Prison) pour une liste entière.
+
+        Nécéssite le code de sécurité pour être executée."""
+        listec = listec.upper()
+        server = ctx.message.server
+        prol = self.sys["ROLE"]
+        if listec in self.vig:
+            for uid in self.vig[listec]["LISTE"]:
+                user = server.get_member(uid)
+                r = discord.utils.get(ctx.message.server.roles, name=prol)
+                if prol not in [r.name for r in user.roles]:
+                    await self.bot.add_roles(user, r)
+                    await self.bot.say("**{}** est maintenant en prison par **Vigilance**.".format(user.name))
+                    await self.bot.send_message(user, "Tu es maintenant en prison par **Vigilance**. Si tu as une réclamation à faire, va sur le canal *prison* du serveur ou contacte un modérateur.")
+                    await self.bot.server_voice_state(user, mute=True)
+                else:
+                    await self.bot.remove_roles(user, r)
+                    await self.bot.server_voice_state(user, mute=False)
+                    await self.bot.say("**{}** à été libéré de la prison plus tôt que prévu.".format(user.name))
+                    await self.bot.send_message(user, "Tu a été libéré de la prison.")
+            else:
+                await self.bot.say("**Terminé.**")
+        else:
+            for id in self.vig:
+                if listec in id:
+                    nom = id[-4:]
+                    await self.bot.whisper("Il me faut le code de sécurité précédant '#'")
+                    return
+            else:
+                await self.bot.whisper("Cette liste n'existe pas.")
+
+    @vigil.command(pass_context=True)
+    @checks.mod_or_permissions(ban_members=True)
+    async def aut(self, ctx):
+        """Permet d'activer l'attribution automatique de liste aux nouveaux arrivants.
+
+        Crée la liste si non existante."""
+        id = self.gen_code()
+        if self.vigset["DETECT_ACTIF"] is False:
+            if id not in self.vig:
+                self.vig[id] = {"ID" : id,"LISTE" : []}
+                nom = id[-4:]
+                self.vigset["DETECT_LIST"] = id
+                self.vigset["DETECT_CHAN"] = ctx.message.channel.id
+                self.vigset["DETECT_ACTIF"] = True
+                await self.bot.whisper("Liste **{}** crée.".format(id))
+                await self.bot.say("**Activé pour la liste {}** Les logs seront envoyés sur ce channel.".format(nom))
+                fileIO("data/jail/vig.json", "save", self.vig)
+                fileIO("data/jail/vigset.json", "save", self.vigset)
+            else:
+                await self.bot.whisper("Impossible, réesayez plus tard.")
+        else:
+            self.vigset["DETECT_ACTIF"] = False
+            fileIO("data/jail/vig.json", "save", self.vig)
+            fileIO("data/jail/vigset.json", "save", self.vigset)
+            await self.bot.say("**Désactivé**")
+
+    async def detect(self, user):
+        if self.vigset["DETECT_ACTIF"] is True:
+            id = self.vigset["DETECT_LIST"]
+            chan = self.vigset["DETECT_CHAN"]
+            chan = user.server.get_channel(chan)
+            nom = id[-4:]
+            if user.id not in self.vig[id]["LISTE"]:
+                self.vig[id]["LISTE"].append(user.id)
+                await self.bot.send_message(chan, "[AUTO] **{}** ajouté à la liste **{}**".format(user.name, nom))
+                fileIO("data/jail/vig.json", "save", self.vig)
+            else:
+                pass
+
+    # SYSTEM -----------------------------------------------------------------------
+
+    def gen_code(self):
+        let = ["A","B","C","D","E","F","G","H","K","L","M","N","O","P","W","X","Y","Z"]
+        rand1 = str(random.randint(10000,99999))
+        rand2 = random.sample(let, 3)
+        code = rand1 + "#" 
+        for e in rand2:
+            code += e
+        return code
         
 def check_folders():
     folders = ("data", "data/jail/")
@@ -356,12 +574,17 @@ def check_files():
         print("Je crée la base de données de Jail...")
         fileIO("data/jail/sys.json", "save", {})
 
-    if not os.path.isfile("data/jail/regis.json"):
-        print("Je crée la base de données pour le Karma...")
-        fileIO("data/jail/regis.json", "save", {})
+    if not os.path.isfile("data/jail/vig.json"):
+        print("Je crée la base de données Vigilance...")
+        fileIO("data/jail/vig.json", "save", {})
+
+    if not os.path.isfile("data/jail/vigset.json"):
+        print("Je crée la base de données Vigilance Réglages...")
+        fileIO("data/jail/vigset.json", "save", default)
 
 def setup(bot):
     check_folders()
     check_files()
     n = Jail(bot)
+    bot.add_listener(n.detect, "on_member_join")
     bot.add_cog(n)
