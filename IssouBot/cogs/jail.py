@@ -364,7 +364,7 @@ class Jail:
     @vigil.command(pass_context=True)
     @checks.mod_or_permissions(ban_members=True)
     async def crt(self, ctx):
-        """Ajoute des utilisateurs à Vigilance.
+        """Ajoute des utilisateurs à Vigilance en créant une liste.
 
         Cette commande crée une liste des mentionnés et renvoie un ID de modération."""
         ment = ctx.message.mentions
