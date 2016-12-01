@@ -428,7 +428,7 @@ class Jail:
         for id in self.vig:
             if liste in id:
                 nom = id[-4:]
-                if self.vig[id]["CREATOR"] == ctx.message.author.id:
+                if self.vig[id]["CREATEUR"] == ctx.message.author.id:
                     del self.vig[id]
                     await self.bot.say("Liste **{}** supprimée.".format(nom))
                     fileIO("data/jail/vig.json", "save", self.vig)
@@ -452,12 +452,20 @@ class Jail:
             for id in self.vig:
                 if liste in id:
                     nom = id[-4:]
-                    msg = "**Liste {}**\n".format(nom)
-                    for u in self.vig[id]["LISTE"]:
-                        user = server.get_member(u)
-                        msg += "*{}*\n".format(user.name)
-                    await self.bot.whisper(msg)
-                    return
+                    if self.vig[id]["CREATEUR"] == ctx.message.author.id:
+                        msg = "**Liste {} (__{}__)**\n".format(nom, id)
+                        for u in self.vig[id]["LISTE"]:
+                            user = server.get_member(u)
+                            msg += "*{}*\n".format(user.name)
+                        await self.bot.whisper(msg)
+                        return
+                    else:
+                        msg = "**Liste {}**\n".format(nom)
+                        for u in self.vig[id]["LISTE"]:
+                            user = server.get_member(u)
+                            msg += "*{}*\n".format(user.name)
+                        await self.bot.whisper(msg)
+                        return
                 else:
                     pass
             else:
