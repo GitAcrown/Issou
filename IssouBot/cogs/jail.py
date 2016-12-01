@@ -474,7 +474,9 @@ class Jail:
             msg = "**Listes disponibles:**\n"
             for id in self.vig:
                 nom = id[-4:]
-                msg += "*{}*\n".format(nom)
+                creator = self.vig[id]["CREATEUR"]
+                creator = server.get_member(creator)
+                msg += "*{}* | **{}**\n".format(nom, creator.name)
             if msg != "**Listes disponibles:**\n":
                 await self.bot.whisper(msg)
             else:
