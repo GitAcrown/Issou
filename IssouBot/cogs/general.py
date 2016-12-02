@@ -26,6 +26,7 @@ class General:
         self.bot = bot
         self.sett = dataIO.load_json("data/gen/sett.json")
         self.stopwatches = {}
+        self.box = dataIO.load_json("data/gen/box.json")
         self.ball = ["A ce que je vois, oui.", "C'est certain.", "J'hésite.", "Plutôt oui.", "Il semble que oui.",
                      "Les esprits penchent pour un oui.", "Sans aucun doute.", "Oui.", "Oui - C'est sûr.", "Tu peux compter dessus.", "Je ne sais pas.",
                      "Ta question n'est pas très interessante...", "Je ne vais pas te le dire.", "Je ne peux pas prédire le futur.", "Vaut mieux pas que te révelle la vérité.",
@@ -176,6 +177,232 @@ class General:
             user = author
         await self.bot.whisper("Avatar de **{}**: {}".format(user.name, user.avatar_url))
 
+#BOX ========================================================
+
+    @commands.command(pass_context=True)
+    async def inbox(self, ctx, recherche : str = None):
+        """Affiche des liens et des messages pré-enregistrés dans Inbox."""
+        if recherche != None:
+            for nom in self.box:
+                if recherche in nom:
+                    if self.box[nom]["COLOR"] != None:
+                        col = self.box[nom]["COLOR"]
+                    else:
+                        col = discord.Colour.light_grey()
+                    tick = self.box[nom]["TICK"]
+                    em = discord.Embed(colour=col)
+                    if "##" in tick:
+                        tick = tick.replace("##","\n")
+                    if "@@" in tick:
+                        clean = []
+                        for elt in tick.split("@@"):
+                            alt = elt.split("!!")
+                            clean.append([alt[0],alt[1]])
+                    else:
+                        alt = elt.split("!!")
+                        clean.append(alt[0])
+                        clean.append(alt[1])
+                    inline = True
+                    for e in clean:
+                        for a in e:
+                            if "??" in a:
+                                inline = False
+                    for e in clean:
+                        if "??" in e[0]:
+                            name = e[0].replace("??","")
+                        else:
+                            name = e[0]
+                        if "??" in e[1]:
+                            value = e[1].replace("??","")
+                        else:
+                            value = e[1]
+                        em.add_field(name=name, value=value, inline=inline)
+                    if self.box[nom]["IMG"] != None:
+                        img = self.box[nom]["IMG"]
+                        em.set_image(url=img)
+                    if self.box[nom]["FOOTER"] != None:
+                        footer = self.box[nom]["FOOTER"]
+                        em.set_footer(text=footer)
+                    await self.bot.say(embed=em)
+                    return
+            else:
+                await self.bot.say("Aucun ticket ne correspond à cette recherche.")
+        else:
+            prt = "**__Disponibles:__**\n"
+            for e in self.box:
+                prt += "¤ **{}**\n".format(self.box[e]["NOM"])
+            else:
+                await self.bot.whisper(prt)
+
+    @commands.command(pass_context=True)
+    @checks.admin_or_permissions(kick_members=True)
+    async def addbox(self, ctx, nom : str, tick : str, coul = None, footer = None, imgurl = None):
+        """Permet de rajouter un ticket Inbox.
+
+        --- Obligatoire ---
+        Nom = Nom de votre ticket.
+        Tick = Ce qu'il y a dans le ticket.
+        FORMAT : "Titre !!Message@@Autre Titre!!Autre Message (...)"
+        - '!!' pour passer du titre au message/valeur
+        - '##' pour sauter une ligne
+        - '@@' pour couper le ticket en plusieures parties
+        - Ajoutez '??' n'importe où dans le ticket pour passer en mode colonne
+        - Ne mettez pas d'espaces entre les messages.
+        ----- Options -----
+        Coul = Change la couleur du ticket. (Forme HEX: 0x<hex>)
+        Footer = Affiche un message en bas du ticket.
+        Imgurl = Affiche une image dans le ticket."""
+        if nom not in self.box:
+            if coul != None:
+                coul = int(coul, 16)
+            self.box[nom] = {"NOM" : nom,
+                             "TICK" : tick,
+                             "COLOR" : coul,
+                             "FOOTER" : footer,
+                             "IMG" : imgurl}
+            fileIO("data/gen/box.json", "save", self.box)
+            await self.bot.whisper("**Enregisté**. Je vais vous envoyer un aperçu d'ici quelques secondes...")
+            await asyncio.sleep(2)
+            # ======= AFFICHAGE =========
+            if self.box[nom]["COLOR"] != None:
+                col = self.box[nom]["COLOR"]
+            else:
+                col = discord.Colour.light_grey()
+            tick = self.box[nom]["TICK"]
+            em = discord.Embed(colour=col)
+            if "##" in tick:
+                tick = tick.replace("##","\n")
+            if "@@" in tick:
+                clean = []
+                for elt in tick.split("@@"):
+                    alt = elt.split("!!")
+                    clean.append([alt[0],alt[1]])
+            else:
+                alt = elt.split("!!")
+                clean.append(alt[0])
+                clean.append(alt[1])
+            inline = True
+            for e in clean:
+                for a in e:
+                    if "??" in a:
+                        inline = False
+            for e in clean:
+                if "??" in e[0]:
+                    name = e[0].replace("??","")
+                else:
+                    name = e[0]
+                if "??" in e[1]:
+                    value = e[1].replace("??","")
+                else:
+                    value = e[1]
+                em.add_field(name=name, value=value, inline=inline)
+            if self.box[nom]["IMG"] != None:
+                img = self.box[nom]["IMG"]
+                em.set_image(url=img)
+            if self.box[nom]["FOOTER"] != None:
+                footer = self.box[nom]["FOOTER"]
+                em.set_footer(text=footer)
+            await self.bot.whisper(embed=em)
+        else:
+            await self.bot.say("Ce nom est déjà dans ma base de données.")
+
+    @commands.command(pass_context=True)
+    @checks.admin_or_permissions(kick_members=True)
+    async def rembox(self, ctx, nom):
+        """Permet la suppression d'un ticker Inbox"""
+        if nom in self.box:
+            del self.box[nom]
+            fileIO("data/gen/box.json", "save", self.box)
+            await self.bot.say("Supprimé.")
+        else:
+            await self.bot.say("Ce nom n'existe pas.")
+
+    @commands.command(pass_context=True)
+    @checks.admin_or_permissions(kick_members=True)
+    async def ltrbox(self, ctx, nom):
+        """Affiche le ticket sans formatage."""
+        for e in self.box:
+            if nom in e:
+                await self.bot.say("**{}** | \"*{}*\" ".format(self.box[e]["NOM"], self.box[e]["TICK"]))
+                return
+            else:
+                pass
+        else:
+            await self.bot.say("Aucun nom ne correspond à la recherche.")
+
+    @commands.command(pass_context=True)
+    @checks.admin_or_permissions(kick_members=True)
+    async def edtbox(self, ctx, nom, tick : str, coul = None, footer = None, imgurl = None):
+        """Permet d'éditer un ticket.
+
+        --- Obligatoire ---
+        Nom = Nom de votre ticket à modifier.
+        Tick = Ce qu'il y a dans le ticket.
+        FORMAT : "Titre !!Message@@Autre Titre!!Autre Message (...)"
+        - '!!' pour passer du titre au message/valeur
+        - '##' pour sauter une ligne
+        - '@@' pour couper le ticket en plusieures parties
+        - Ajoutez '??' n'importe où dans le ticket pour passer en mode colonne
+        - Ne mettez pas d'espaces entre les messages.
+        ----- Options -----
+        Coul = Change la couleur du ticket. (Forme HEX: 0x<hex>)
+        Footer = Affiche un message en bas du ticket.
+        Imgurl = Affiche une image dans le ticket."""
+        if nom in self.box:
+            if coul != None:
+                coul = int(coul, 16)
+            if "##" in msg:
+                msg = msg.replace("##","\n")
+            self.box[nom] = {"NOM" : nom,
+                             "TICK" : tick,
+                             "COLOR" : coul,
+                             "FOOTER" : footer,
+                             "IMG" : imgurl}
+            fileIO("data/gen/box.json", "save", self.box)
+            await self.bot.whisper("**Modifié**. Je vais vous envoyer un aperçu d'ici quelques secondes...")
+            await asyncio.sleep(2)
+            if self.box[nom]["COLOR"] != None:
+                col = self.box[nom]["COLOR"]
+            else:
+                col = discord.Colour.light_grey()
+            tick = self.box[nom]["TICK"]
+            em = discord.Embed(colour=col)
+            if "##" in tick:
+                tick = tick.replace("##","\n")
+            if "@@" in tick:
+                clean = []
+                for elt in tick.split("@@"):
+                    alt = elt.split("!!")
+                    clean.append([alt[0],alt[1]])
+            else:
+                alt = elt.split("!!")
+                clean.append(alt[0])
+                clean.append(alt[1])
+            inline = True
+            for e in clean:
+                for a in e:
+                    if "??" in a:
+                        inline = False
+            for e in clean:
+                if "??" in e[0]:
+                    name = e[0].replace("??","")
+                else:
+                    name = e[0]
+                if "??" in e[1]:
+                    value = e[1].replace("??","")
+                else:
+                    value = e[1]
+                em.add_field(name=name, value=value, inline=inline)
+            if self.box[nom]["IMG"] != None:
+                img = self.box[nom]["IMG"]
+                em.set_image(url=img)
+            if self.box[nom]["FOOTER"] != None:
+                footer = self.box[nom]["FOOTER"]
+                em.set_footer(text=footer)
+            await self.bot.whisper(embed=em)
+        else:
+            await self.bot.say("Ce nom n'est pas dans ma base de données.")
+
     @commands.command(aliases=["t"], pass_context=True)
     async def talk(self, ctx, *msg):
         """Pour discuter avec le bot en public."""
@@ -230,43 +457,46 @@ class General:
     async def cbsess(self, message):
         channel = message.channel
         author = message.author
-        if author.id != self.sett["BOT_ID"]:
-            if self.sett["ACTIVE"] is True:
-                if channel.id == self.sett["CHANNEL"]:
-                    if self.sett["CB_AUTO"] is False:
-                        self.sett["CB_AUTO"] = True
-                        fileIO("data/gen/sett.json", "save", self.sett)
-                        mess = await self.bot.send_message(channel, "**Passage en mode Automatique sur ce channel.**\n*Dîtes 'FTG' pour repasser en automatique.*")
-                        self.sett["BOT_ID"] = mess.author.id
-                        fileIO("data/gen/sett.json", "save", self.sett)
-                    else:
-                        msg = message.content
-                        if msg != "**Passage en mode Automatique sur ce channel.**\n*Dîtes 'FTG' pour repasser en automatique.*":
-                            if 'FTG' not in msg:
-                                rep = str(cb.ask(msg))
-                                if "Ãª" in rep:
-                                    rep = rep.replace("Ãª","ê")
-                                if "Ã©" in rep:
-                                    rep = rep.replace("Ã©","é")
-                                if "Ã»" in rep:
-                                    rep = rep.replace("Ã»","û")
-                                if "Ã«" in rep:
-                                    rep = rep.replace("Ã«","ë")
-                                if "Ã¨" in rep:
-                                    rep = rep.replace("Ã¨","è")
-                                if "Ã§" in rep:
-                                    rep = rep.replace("Ã§","ç")
-                                await asyncio.sleep(0.50)
-                                await self.bot.send_typing(channel)
-                                await self.bot.send_message(channel, rep)
-                            else:
-                                self.sett["ACTIVE"] = False
-                                self.sett["CHANNEL"] = ""
-                                self.sett["CB_AUTO"] = False
-                                fileIO("data/gen/sett.json", "save", self.sett)
-                                await self.bot.send_message(channel, "**Passage en mode Manuel...**")
+        if self.sett["BOT_ID"]:
+            if author.id != self.sett["BOT_ID"]:
+                if self.sett["ACTIVE"] is True:
+                    if channel.id == self.sett["CHANNEL"]:
+                        if self.sett["CB_AUTO"] is False:
+                            self.sett["CB_AUTO"] = True
+                            fileIO("data/gen/sett.json", "save", self.sett)
+                            mess = await self.bot.send_message(channel, "**Passage en mode Automatique sur ce channel.**\n*Dîtes 'FTG' pour repasser en automatique.*")
+                            self.sett["BOT_ID"] = mess.author.id
+                            fileIO("data/gen/sett.json", "save", self.sett)
                         else:
-                            pass
+                            msg = message.content
+                            if msg != "**Passage en mode Automatique sur ce channel.**\n*Dîtes 'FTG' pour repasser en automatique.*":
+                                if 'FTG' not in msg:
+                                    rep = str(cb.ask(msg))
+                                    if "Ãª" in rep:
+                                        rep = rep.replace("Ãª","ê")
+                                    if "Ã©" in rep:
+                                        rep = rep.replace("Ã©","é")
+                                    if "Ã»" in rep:
+                                        rep = rep.replace("Ã»","û")
+                                    if "Ã«" in rep:
+                                        rep = rep.replace("Ã«","ë")
+                                    if "Ã¨" in rep:
+                                        rep = rep.replace("Ã¨","è")
+                                    if "Ã§" in rep:
+                                        rep = rep.replace("Ã§","ç")
+                                    await asyncio.sleep(0.50)
+                                    await self.bot.send_typing(channel)
+                                    await self.bot.send_message(channel, rep)
+                                else:
+                                    self.sett["ACTIVE"] = False
+                                    self.sett["CHANNEL"] = ""
+                                    self.sett["CB_AUTO"] = False
+                                    fileIO("data/gen/sett.json", "save", self.sett)
+                                    await self.bot.send_message(channel, "**Passage en mode Manuel...**")
+                            else:
+                                pass
+                    else:
+                        pass
                 else:
                     pass
             else:
@@ -521,6 +751,10 @@ def check_files():
     if not os.path.isfile("data/gen/sett.json"):
         print("Creation du fichier de réglages General...")
         fileIO("data/gen/sett.json", "save", default)
+
+    if not os.path.isfile("data/gen/box.json"):
+        print("Creation du fichier BOX...")
+        fileIO("data/gen/box.json", "save", {})
 
 def setup(bot):
     check_folders()
