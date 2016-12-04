@@ -193,15 +193,15 @@ class General:
                     em = discord.Embed(colour=col)
                     if "##" in tick:
                         tick = tick.replace("##","\n")
+                    clean = []
                     if "@@" in tick:
-                        clean = []
                         for elt in tick.split("@@"):
                             alt = elt.split("!!")
                             clean.append([alt[0],alt[1]])
                     else:
+                        elt = tick
                         alt = elt.split("!!")
-                        clean.append(alt[0])
-                        clean.append(alt[1])
+                        clean.append([alt[0],alt[1]])
                     inline = True
                     for e in clean:
                         for a in e:
@@ -272,15 +272,15 @@ class General:
             em = discord.Embed(colour=col)
             if "##" in tick:
                 tick = tick.replace("##","\n")
+            clean = []
             if "@@" in tick:
-                clean = []
                 for elt in tick.split("@@"):
                     alt = elt.split("!!")
                     clean.append([alt[0],alt[1]])
             else:
+                elt = tick
                 alt = elt.split("!!")
-                clean.append(alt[0])
-                clean.append(alt[1])
+                clean.append([alt[0],alt[1]])
             inline = True
             for e in clean:
                 for a in e:
@@ -369,15 +369,15 @@ class General:
             em = discord.Embed(colour=col)
             if "##" in tick:
                 tick = tick.replace("##","\n")
+            clean = []
             if "@@" in tick:
-                clean = []
                 for elt in tick.split("@@"):
                     alt = elt.split("!!")
                     clean.append([alt[0],alt[1]])
             else:
+                elt = tick
                 alt = elt.split("!!")
-                clean.append(alt[0])
-                clean.append(alt[1])
+                clean.append([alt[0],alt[1]])
             inline = True
             for e in clean:
                 for a in e:
