@@ -180,7 +180,7 @@ class General:
 #BOX ========================================================
 
     @commands.command(pass_context=True)
-    async def inbox(self, ctx, recherche : str = None):
+    async def inbox(self, ctx, recherche : str = None, mp : str = "Non"):
         """Affiche des liens et des messages pré-enregistrés dans Inbox."""
         if recherche != None:
             for nom in self.box:
@@ -223,7 +223,10 @@ class General:
                     if self.box[nom]["FOOTER"] != None:
                         footer = self.box[nom]["FOOTER"]
                         em.set_footer(text=footer)
-                    await self.bot.say(embed=em)
+                    if mp == "Non":
+                        await self.bot.say(embed=em)
+                    else:
+                        await self.bot.whisper(embed=em)
                     return
             else:
                 await self.bot.say("Aucun ticket ne correspond à cette recherche.")
