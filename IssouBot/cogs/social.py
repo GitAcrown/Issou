@@ -17,6 +17,7 @@ class Social:
         self.bot = bot
         self.rift = dataIO.load_json("data/social/rift.json") #account
         self.settings = dataIO.load_json("data/social/settings.json")
+        dft = {"ANNIV_SERV" : None, "ANNIV_CHAN" : None}
 
     @commands.group(pass_context=True)
     @checks.admin_or_permissions(ban_members=True)
@@ -502,20 +503,23 @@ class Social:
 
     async def checking(self):
         while self == self.bot.get_cog("Social"):
-            present = datetime.datetime.today().strftime("%d/%m")
-            for id in self.rift:
-                server = self.settings["ANNIV_SERV"]
-                server = self.bot.get_server(server)
-                user = server.get_member(id)
-                if self.rift[id]["PSEUDO"] != user.name:
-                    self.rift[id]["PSEUDO"] = user.name
-                    self.save()
-                if self.rift[id]["NAISSANCE"] == present:
-                    await self.bot.send_message(self.settings["ANNIV_CHAN"], "**Joyeux anniversaire {} ! :gift:**".format(user.mention))
-                    self.rift[id]["AGE"] += 1
-                    self.save()
-                else:
-                    pass
+            if self.settings["ANNIV_SERV"] != None:
+                present = datetime.datetime.today().strftime("%d/%m")
+                for id in self.rift:
+                    server = self.settings["ANNIV_SERV"]
+                    server = self.bot.get_server(server)
+                    user = server.get_member(id)
+                    if self.rift[id]["PSEUDO"] != user.name:
+                        self.rift[id]["PSEUDO"] = user.name
+                        self.save()
+                    if self.rift[id]["NAISSANCE"] == present:
+                        await self.bot.send_message(self.settings["ANNIV_CHAN"], "**Joyeux anniversaire {} ! :gift:**".format(user.mention))
+                        self.rift[id]["AGE"] += 1
+                        self.save()
+                    else:
+                        pass
+            else:
+                pass
             await asyncio.sleep(86400) #24h entre chaque verification
 
     async def pop(self, message):
@@ -561,7 +565,7 @@ def check_files():
 
     if not os.path.isfile("data/social/settings.json"):
         print("Creation du fichier de paramètres Rift...")
-        fileIO("data/social/settings.json", "save", {})
+        fileIO("data/social/settings.json", "save", dft)
 
 def setup(bot):
     check_folders()
