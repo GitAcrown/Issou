@@ -117,12 +117,19 @@ class Stick:
             nom = self.oldimg["IMG"][stk]["NOM"]
             url = self.oldimg["IMG"][stk]["URL"]
             chemin = self.oldimg["IMG"][stk]["CHEMIN"]
+            cat = self.oldimg["IMG"][stk]["CAT"]
+            if cat == "INTEGRE":
+                aff = "INTEGRE"
+            elif cat == "URLONLY":
+                aff = "URL"
+            else:
+                aff = "UPLOAD"
             if nom not in self.img["STICKER"]:
                 self.img["STICKER"][nom] = {"NOM": nom,
                                             "CHEMIN": chemin,
                                             "URL": url,
                                             "CAT": "NONE",
-                                            "AFF": "UPLOAD",
+                                            "AFF": aff,
                                             "POP": 0}
                 fileIO("data/stick/img.json","save",self.img)
                 msg += "Fichier **{}** importé.\n".format(nom)
@@ -132,7 +139,7 @@ class Stick:
                                             "CHEMIN": file,
                                             "URL": url,
                                             "CAT": "NONE",
-                                            "AFF": "UPLOAD",
+                                            "AFF": aff,
                                             "POP": 0}
                 fileIO("data/stick/img.json","save",self.img)
                 msg += "Fichier **{}** (Nom doublon) importé.\n".format(nom)
