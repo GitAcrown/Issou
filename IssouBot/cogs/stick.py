@@ -253,22 +253,27 @@ class Stick:
     async def list(self, ctx):
         """Affiche une liste des stickers disponibles."""
         msg = "__**Stickers disponibles:**__\n"
+        umsg = ""
         author = ctx.message.author
         if "NONE" not in self.img["CATEGORIE"]:
             self.img["CATEGORIE"]["NONE"] = {"NOM" : "NONE", "DESC" : "Sans catégories"}
         for cat in self.img["CATEGORIE"]:
             msg += "\n" + "**{}**\n".format(self.img["CATEGORIE"][cat]["NOM"])
             msg += "*{}*\n\n".format(self.img["CATEGORIE"][cat]["DESC"])
+            a = 10
             for stk in self.img["STICKER"]:
                 if self.img["STICKER"][stk]["CAT"] == cat:
                     msg += "- {} | {}\n".format(self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["AFF"].title())
+                    if len(msg) > a * 190:
+                        msg += "!!"
+                        a += 10
                 else:
                     pass
         else:
             if ctx.message.author.id in self.user:
                 if len(self.user[author.id]["UTIL"]) >= 3:
-                    msg += "\n" + "**VOS FAVORIS**\n"
-                    msg += "*Vos stickers les plus utilisés*\n\n"
+                    umsg += "\n" + "**VOS FAVORIS**\n"
+                    umsg += "*Vos stickers les plus utilisés*\n\n"
                     clsm = []
                     for stk in self.user[ctx.message.author.id]["UTIL"]:
                         clsm.append([self.user[author.id]["UTIL"][stk]["NOM"],self.user[author.id]["UTIL"][stk]["NB"]])
@@ -282,16 +287,16 @@ class Stick:
                         while a < maxs:
                             nom = clsm[a]
                             nom = nom[0]
-                            msg += "- {} | {}\n".format(self.img["STICKER"][nom]["NOM"], self.img["STICKER"][nom]["AFF"].title())
+                            umsg += "- {} | {}\n".format(self.img["STICKER"][nom]["NOM"], self.img["STICKER"][nom]["AFF"].title())
                             a += 1
 
-                    msg += "\n" + "**VOTRE COLLECTION**\n"
-                    msg += "*Votre collection personnelle*\n\n"
+                    umsg += "\n" + "**VOTRE COLLECTION**\n"
+                    umsg += "*Votre collection personnelle*\n\n"
                     for stk in self.user[author.id]["FAVORIS"]:
-                        msg += "- {} | {}\n".format(self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["AFF"].title())
+                        umsg += "- {} | {}\n".format(self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["AFF"].title())
                     
-                    msg += "\n" + "**POPULAIRES**\n"
-                    msg += "*Les plus utilisés par la communauté*\n\n"
+                    umsg += "\n" + "**POPULAIRES**\n"
+                    umsg += "*Les plus utilisés par la communauté*\n\n"
                     clsm = []
                     for stk in self.img["STICKER"]:
                         clsm.append([self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["POP"]])
@@ -305,13 +310,13 @@ class Stick:
                         while a < maxp:
                             nom = clsm[a]
                             nom = nom[0]
-                            msg += "- {} | {}\n".format(self.img["STICKER"][nom]["NOM"], self.img["STICKER"][nom]["AFF"].title())
+                            umsg += "- {} | {}\n".format(self.img["STICKER"][nom]["NOM"], self.img["STICKER"][nom]["AFF"].title())
                             a += 1
-                    await self.bot.whisper(msg)
-                else:
-                    await self.bot.whisper(msg)
-            else:
-                await self.bot.whisper(msg)
+        lmsg = msg.split("!!")
+        for e in lmsg:
+            await self.bot.whisper(e)
+        if umsg != "":
+            await self.bot.whisper(umsg)
 
     @commands.group(pass_context=True) #CATEGORIE
     @checks.mod_or_permissions(kick_members=True)
