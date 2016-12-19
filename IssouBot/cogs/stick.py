@@ -134,9 +134,9 @@ class Stick:
                 fileIO("data/stick/img.json","save",self.img)
                 msg += "Fichier **{}** importé.\n".format(nom)
             else:
-                nom += "imp"
+                nom += "imp" + str(random.randint(1, 999))
                 self.img["STICKER"][nom] = {"NOM": nom,
-                                            "CHEMIN": file,
+                                            "CHEMIN": chemin,
                                             "URL": url,
                                             "CAT": "NONE",
                                             "AFF": aff,
