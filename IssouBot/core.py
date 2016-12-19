@@ -25,13 +25,13 @@ from cogs.utils.chat_formatting import inline
 from collections import Counter
 
 #
-# Issou - Un bot discord modulaire adapté partiellement de Red by Twentysix26
+# Ambre - Un bot discord modulaire adapté partiellement de Red by Twentysix26
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Les modules marqués d'un "Exclusif" sont des modules crées pour ce bot.
 # Les modules marqués d'un "Optimisé pour TdK" ou "Op" sont des modules réalisés pour le serveur Taverne des Kheys.
 #
 
-description = "Issou - Un bot Discord modulaire"
+description = "Ambre - Un bot Discord modulaire"
 
 
 class Bot(commands.Bot):
@@ -460,7 +460,7 @@ def main():
         print("Gardez le bot à jour en utilisant régulièrement: git pull")
         print("et: pip3 install -U git+https://github.com/Rapptz/"
               "discord.py@master#egg=discord.py[voice]")
-    print("Serveur TdK: https://discord.me/tdkheys")
+    print("Serveur EK: https://discord.me/ekheysn")
     if settings.login_type == "token":
         yield from bot.login(settings.email)
     else:
