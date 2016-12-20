@@ -65,40 +65,46 @@ class Stick:
 
         Hexa est la couleur désirée en hexadécimal. Format : 0x<hex>"""
         author = ctx.message.author
-        if "0x" in hexa:  
-            self.user[author.id]["COLOR"] = hexa
-            fileIO("data/stick/user.json","save",self.user)
-            await self.bot.say("La couleur a bien été integrée. Je vous envoie une démo.")
-            em = discord.Embed(title="DEMO", description="Voici une démo de votre couleur {}".format(hexa), colour = int(hexa, 16))
-            await self.bot.send_message(author, embed=em)
+        if author.id in self.user:
+            if "0x" in hexa:  
+                self.user[author.id]["COLOR"] = hexa
+                fileIO("data/stick/user.json","save",self.user)
+                await self.bot.say("La couleur a bien été integrée. Je vous envoie une démo.")
+                em = discord.Embed(title="DEMO", description="Voici une démo de votre couleur {}".format(hexa), colour = int(hexa, 16))
+                await self.bot.send_message(author, embed=em)
+            else:
+                await self.bot.say("Couleur invalide. Format : 0x<hex>")
         else:
-            await self.bot.say("Couleur invalide. Format : 0x<hex>")
+            await self.bot.say("Vous n'avez pas de suivi")
 
     @utl.command(pass_context=True)
     async def top(self, ctx):
         """Affiche vos stickers les plus utilisés."""
         author = ctx.message.author
-        if len(self.user[author.id]["UTIL"]) >= 3:
-            msg = "**TOP**\n"
-            msg += "*Classés du plus au moins utilisé*\n\n"
-            clsm = []
-            for stk in self.user[ctx.message.author.id]["UTIL"]:
-                clsm.append([self.user[author.id]["UTIL"][stk]["NOM"],self.user[author.id]["UTIL"][stk]["NB"]])
+        if author.id in self.user:
+            if len(self.user[author.id]["UTIL"]) >= 3:
+                msg = "**TOP**\n"
+                msg += "*Classés du plus au moins utilisé*\n\n"
+                clsm = []
+                for stk in self.user[ctx.message.author.id]["UTIL"]:
+                    clsm.append([self.user[author.id]["UTIL"][stk]["NOM"],self.user[author.id]["UTIL"][stk]["NB"]])
+                else:
+                    maxs = len(clsm)
+                    if maxs > 10:
+                        maxs = 10
+                    clsm = sorted(clsm, key=operator.itemgetter(1))
+                    clsm.reverse()
+                    a = 0
+                    while a < maxs:
+                        nom = clsm[a]
+                        nom = nom[0]
+                        msg += "- {} | {}\n".format(self.img["STICKER"][nom]["NOM"], self.img["STICKER"][nom]["AFF"].title())
+                        a += 1
+                await self.bot.whisper(msg)
             else:
-                maxs = len(clsm)
-                if maxs > 10:
-                    maxs = 10
-                clsm = sorted(clsm, key=operator.itemgetter(1))
-                clsm.reverse()
-                a = 0
-                while a < maxs:
-                    nom = clsm[a]
-                    nom = nom[0]
-                    msg += "- {} | {}\n".format(self.img["STICKER"][nom]["NOM"], self.img["STICKER"][nom]["AFF"].title())
-                    a += 1
-            await self.bot.whisper(msg)
+                await self.bot.whisper("Vous êtes trop récent pour avoir un top.")
         else:
-            await self.bot.whisper("Vous êtes trop récent pour avoir un top.")
+            await self.bot.say("Vous n'avez pas de suivi.")
 
     @commands.group(pass_context=True) #STICKERS
     @checks.mod_or_permissions(kick_members=True)
@@ -107,7 +113,7 @@ class Stick:
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
 
-    @stk.command(pass_context=True)
+    @stk.command(pass_context=True, hidden=True)
     async def imp(self, ctx):
         """Permet d'importer les stickers de l'ancien module."""
         if "NONE" not in self.img["CATEGORIE"]:
@@ -146,7 +152,32 @@ class Stick:
         else:
             await self.bot.say(msg)
 
-    @stk.command(pass_context=True)
+    @stk.command(aliases = ["p"], pass_context=True)
+    async def pop(self, ctx, top:int = 20):
+        """Affiche les stickers les plus populaires sur le serveur."""
+        if top < 10 or top > 30:
+            await self.bot.say("Veuillez mettre un top supérieur à 10 et inférieur à 30.")
+            return
+        umsg = "\n" + "**POPULAIRES**\n"
+        umsg += "*Les plus utilisés par la communauté*\n\n"
+        clsm = []
+        for stk in self.img["STICKER"]:
+            clsm.append([self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["POP"]])
+        else:
+            maxp = len(clsm)
+            if maxp > top:
+                maxp = top
+            clsm = sorted(clsm, key=operator.itemgetter(1))
+            clsm.reverse()
+            a = 0
+            while a < maxp:
+                nom = clsm[a]
+                nom = nom[0]
+                umsg += "- {} | {}\n".format(self.img["STICKER"][nom]["POP"], self.img["STICKER"][nom]["NOM"])
+                a += 1
+        await self.bot.say(umsg)
+
+    @stk.command(aliases = ["a"],pass_context=True)
     async def add(self, ctx, nom, cat, url, aff=None):
         """Permet de créer un sticker pour le serveur.
 
@@ -200,7 +231,7 @@ class Stick:
             else:
                 await self.bot.whisper(msg)
 
-    @stk.command(pass_context=True)
+    @stk.command(aliases = ["e"],pass_context=True)
     async def edit(self, ctx, nom, cat, aff=None):
         """Permet de changer des données liées à un sticker.
 
@@ -232,7 +263,7 @@ class Stick:
             else:
                 await self.bot.whisper(msg)
 
-    @stk.command(pass_context=True)
+    @stk.command(aliases = ["d"],pass_context=True)
     async def delete(self, ctx, nom):
         """Permet d'effacer définitivement un sticker."""
         nom = nom.lower()
@@ -249,27 +280,79 @@ class Stick:
         else:
             await self.bot.say("Ce sticker n'existe pas.")
 
-    @stk.command(pass_context=True)
-    async def list(self, ctx):
-        """Affiche une liste des stickers disponibles."""
-        msg = "__**Stickers disponibles:**__\n"
+    @stk.command(aliases = ["l"],pass_context=True)
+    async def list(self, ctx, cat = None):
+        """Affiche une liste des stickers disponibles.
+
+        Si aucune catégorie n'est précisée, donne tout les stickers disponibles.
+        Pour avoir les favoris serveur, précisez 'fav'."""
         umsg = ""
         author = ctx.message.author
-        if "NONE" not in self.img["CATEGORIE"]:
-            self.img["CATEGORIE"]["NONE"] = {"NOM" : "NONE", "DESC" : "Sans catégories"}
-        for cat in self.img["CATEGORIE"]:
-            msg += "\n" + "**{}**\n".format(self.img["CATEGORIE"][cat]["NOM"])
-            msg += "*{}*\n\n".format(self.img["CATEGORIE"][cat]["DESC"])
-            a = 10
-            for stk in self.img["STICKER"]:
-                if self.img["STICKER"][stk]["CAT"] == cat:
-                    msg += "- {} | {}\n".format(self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["AFF"].title())
-                    if len(msg) > a * 190:
-                        msg += "!!"
-                        a += 10
-                else:
-                    pass
-        else:
+        if cat == None:
+            msg = "__**Stickers disponibles:**__\n"
+            if "NONE" not in self.img["CATEGORIE"]:
+                self.img["CATEGORIE"]["NONE"] = {"NOM" : "NONE", "DESC" : "Sans catégories"}
+            for cat in self.img["CATEGORIE"]:
+                msg += "\n" + "**{}**\n".format(self.img["CATEGORIE"][cat]["NOM"])
+                msg += "*{}*\n\n".format(self.img["CATEGORIE"][cat]["DESC"])
+                a = 10
+                for stk in self.img["STICKER"]:
+                    if self.img["STICKER"][stk]["CAT"] == cat:
+                        msg += "- {} | {}\n".format(self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["AFF"].title())
+                        if len(msg) > a * 195:
+                            msg += "!!"
+                            a += 10
+                    else:
+                        pass
+            else:
+                if ctx.message.author.id in self.user:
+                    if len(self.user[author.id]["UTIL"]) >= 3:
+                        umsg += "\n" + "**VOS FAVORIS**\n"
+                        umsg += "*Vos stickers les plus utilisés*\n\n"
+                        clsm = []
+                        for stk in self.user[ctx.message.author.id]["UTIL"]:
+                            clsm.append([self.user[author.id]["UTIL"][stk]["NOM"],self.user[author.id]["UTIL"][stk]["NB"]])
+                        else:
+                            maxs = len(clsm)
+                            if maxs > 10:
+                                maxs = 10
+                            clsm = sorted(clsm, key=operator.itemgetter(1))
+                            clsm.reverse()
+                            a = 0
+                            while a < maxs:
+                                nom = clsm[a]
+                                nom = nom[0]
+                                umsg += "- {}".format(self.img["STICKER"][nom]["NOM"])
+                                a += 1
+
+                        umsg += "\n" + "**VOTRE COLLECTION**\n"
+                        umsg += "*Votre collection personnelle*\n\n"
+                        for stk in self.user[author.id]["FAVORIS"]:
+                            umsg += "- {}\n".format(self.img["STICKER"][stk]["NOM"])
+                        
+                        umsg += "\n" + "**POPULAIRES**\n"
+                        umsg += "*Les plus utilisés par la communauté*\n\n"
+                        clsm = []
+                        for stk in self.img["STICKER"]:
+                            clsm.append([self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["POP"]])
+                        else:
+                            maxp = len(clsm)
+                            if maxp > 10:
+                                maxp = 10
+                            clsm = sorted(clsm, key=operator.itemgetter(1))
+                            clsm.reverse()
+                            a = 0
+                            while a < maxp:
+                                nom = clsm[a]
+                                nom = nom[0]
+                                umsg += "- {} | {}\n".format(self.img["STICKER"][nom]["POP"], self.img["STICKER"][nom]["NOM"])
+                                a += 1
+            lmsg = msg.split("!!")
+            for e in lmsg:
+                await self.bot.whisper(e)
+            if umsg != "":
+                await self.bot.whisper(umsg)
+        elif cat == "fav":
             if ctx.message.author.id in self.user:
                 if len(self.user[author.id]["UTIL"]) >= 3:
                     umsg += "\n" + "**VOS FAVORIS**\n"
@@ -312,11 +395,43 @@ class Stick:
                             nom = nom[0]
                             umsg += "- {} | {}\n".format(self.img["STICKER"][nom]["NOM"], self.img["STICKER"][nom]["AFF"].title())
                             a += 1
-        lmsg = msg.split("!!")
-        for e in lmsg:
-            await self.bot.whisper(e)
-        if umsg != "":
-            await self.bot.whisper(umsg)
+                    await self.bot.whisper(umsg)
+                else:
+                    await self.bot.whisper("Vous êtes trop récent pour avoir un suivi.")
+            else:
+                await self.bot.whisper("Vous n'avez pas de suivi.")
+        else:
+            cat = cat.upper()
+            if "NONE" not in self.img["CATEGORIE"]:
+                self.img["CATEGORIE"]["NONE"] = {"NOM" : "NONE", "DESC" : "Sans catégories"}
+            msg = "__**Stickers dans la catégorie : {}**__\n".format(cat)
+            for stk in self.img["STICKER"]:
+                if self.img["STICKER"][stk]["CAT"] == cat:
+                    msg += "- {}\n".format(self.img["STICKER"][stk]["NOM"])
+                    a = 10
+                    if len(msg) > a * 195:
+                        msg += "!!"
+                        a += 10
+                else:
+                    pass
+            else:
+                if "!!" in msg:
+                    msgl = msg.split("!!")
+                    for l in msgl:
+                        await self.bot.whisper(l)
+                else:
+                    await self.bot.whisper(msg)
+
+    @stk.command(aliases = ["s"], pass_context=True)
+    async def search(self, ctx, arg:str):
+        """Permet de rechercher un sticker."""
+        arg = arg.lower()
+        msg = "**__Résultats pour : {}__**\n".format(arg)
+        for stk in self.img["STICKER"]:
+            if arg in stk:
+                msg += "**{}** | *{}*\n".format(self.img["STICKER"][stk]["NOM"], self.img["STICKER"][stk]["CAT"])
+        else:
+            await self.bot.whisper(msg)
 
     @commands.group(pass_context=True) #CATEGORIE
     @checks.mod_or_permissions(kick_members=True)
@@ -348,8 +463,8 @@ class Stick:
             if "NONE" not in self.img["CATEGORIE"]:
                 self.img["CATEGORIE"]["NONE"] = {"NOM" : "NONE", "DESC" : "Sans catégories"}
             for sticker in self.img["STICKER"]:
-                if self.img["STICKER"][sticker]["CATEGORIE"] == nom:
-                    self.img["STICKER"][sticker]["CATEGORIE"] = "NONE"
+                if self.img["STICKER"][sticker]["CAT"] == nom:
+                    self.img["STICKER"][sticker]["CAT"] = "NONE"
             del self.img["STICKER"][nom]
             fileIO("data/stick/img.json", "save", self.img)
             await self.bot.say("**Votre catégorie {} à été retirée.**\n *Les images ayant cette catégorie sont déplacés dans 'AUTRES'.*".format(nom.title()))
