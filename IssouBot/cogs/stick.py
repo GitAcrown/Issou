@@ -214,7 +214,8 @@ class Stick:
                                                 "CAT": cat,
                                                 "AFF": aff,
                                                 "POP": 0}
-                    self.user[ctx.message.author.id]["FAVORIS"].append(nom)
+                    nommod = nom + " [P]"
+                    self.user[ctx.message.author.id]["FAVORIS"].append(nommod)
                     fileIO("data/stick/user.json","save",self.user)
                     fileIO("data/stick/img.json","save",self.img)
                     await self.bot.say("Fichier **{}** enregistré localement.".format(filename))
