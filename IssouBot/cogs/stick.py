@@ -232,7 +232,7 @@ class Stick:
                 await self.bot.whisper(msg)
 
     @stk.command(aliases = ["e"],pass_context=True)
-    async def edit(self, ctx, nom, cat, aff=None):
+    async def edit(self, ctx, nom, cat, aff=None, url=None):
         """Permet de changer des données liées à un sticker.
 
         Si aucun affichage n'est spécifié, l'affichage sera conservé tel quel."""
@@ -248,7 +248,9 @@ class Stick:
                 else:
                     await self.bot.say("Cet affichage n'existe pas (URL, UPLOAD ou INTEGRE).")
                     return
-                url = self.img["STICKER"][nom]["URL"]
+                if url == None:
+                    url = self.img["STICKER"][nom]["URL"]
+                    await self.bot.say("*URL conservée.*")
                 file = self.img["STICKER"][nom]["CHEMIN"]
                 self.img["STICKER"][nom] = {"NOM": nom, "CHEMIN":file, "URL": url, "CAT":cat, "AFF":aff, "POP": 0}
                 fileIO("data/stick/img.json","save",self.img)
