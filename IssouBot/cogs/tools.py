@@ -12,7 +12,7 @@ default_settings = {
     "leave_message": "{0.mention} has left the server.",
     "ban_message": "{0.mention} has been banned.",
     "unban_message": "{0.mention} has been unbanned.",
-    "join_mp": "Salut {0.mention}, bienvenue sur TdK !",
+    "join_mp": "Salut {0.mention}, bienvenue sur EK !",
     "on": False,
     "channel": None
 }
@@ -167,6 +167,15 @@ class Tools:
         channel = self.get_welcome_channel(server)
         await self.bot.send_message(channel,"{0.mention}, " + "Je vais maintenant envoyer les messages d'annonce" + "sur {1.mention}.".format(ctx.message.author, channel))
 
+    @commands.command(pass_context=True, no_pm=True)
+    @checks.admin_or_permissions(manage_server=True)
+    async def upchan(self, ctx, channel: discord.Channel):
+        """Permet de mettre un serveur de publication des update profil."""
+        server = ctx.message.server
+        self.settings[server.id]["upchan"] = channel.id
+        dataIO.save_json(self.settings_path, self.settings)
+        await self.bot.say("Channel réglé.")
+
     async def member_join(self, member: discord.Member):
         server = member.server
         if server.id not in self.settings:
@@ -276,6 +285,28 @@ class Tools:
         else:
             print("J'ai essayé d'envoyer un message mais je n'ai pas pu, l'utilisateur était {}.".format(member.name))
 
+    async def member_update(self, before: discord.Member, after: discord.Member):
+        server = after.server
+        if server.id in self.settings:
+            if before.nick != after.nick:
+                if after.nick != None:
+                    if before.nick == None:
+                        channel = self.bot.get_channel(self.settings[server.id]["upchan"])
+                        await self.bot.send_message(channel, "> **{}** a changé son surnom en **{}** (Pseudo *{}*)".format(before.name, after.nick, after.name))
+                        return
+                    channel = self.bot.get_channel(self.settings[server.id]["upchan"])
+                    await self.bot.send_message(channel, "> **{}** a changé son surnom en **{}** (Pseudo *{}*)".format(before.nick, after.nick, after.name))
+                else:
+                    channel = self.bot.get_channel(self.settings[server.id]["upchan"])
+                    await self.bot.send_message(channel, "> **{}** a enlevé son surnom (Pseudo *{}*)".format(before.nick, after.name))
+            elif before.name != after.name:
+                channel = self.bot.get_channel(self.settings[server.id]["upchan"])
+                await self.bot.send_message(channel, "> **{}** a changé son pseudo en **{}** (Surnom *{}*)".format(before.name, after.name, after.nick))
+            else:
+                pass
+        else:
+            pass
+
     def get_welcome_channel(self, server: discord.Server):
         return server.get_channel(self.settings[server.id]["channel"])
 
@@ -286,6 +317,8 @@ class Tools:
         return server.get_member(
             self.bot.user.id).permissions_in(channel).send_messages
 
+    
+    #DEMARRAGE =================================================================
 
 def check_folders():
     if not os.path.exists("data/membership"):
@@ -299,6 +332,10 @@ def check_files():
         print("Création de data/membership/settings.json...")
         dataIO.save_json(f, {})
 
+    f = "data/gen/sondage.json"
+    if not dataIO.is_valid_json(f):
+        print("Création du fichier de Sondages...")
+        dataIO.save_json(f, {})
 
 def setup(bot: commands.Bot):
     check_folders()
@@ -308,4 +345,5 @@ def setup(bot: commands.Bot):
     bot.add_listener(n.member_leave, "on_member_remove")
     bot.add_listener(n.member_ban, "on_member_ban")
     bot.add_listener(n.member_unban, "on_member_unban")
+    bot.add_listener(n.member_update, "on_member_update")
     bot.add_cog(n)
