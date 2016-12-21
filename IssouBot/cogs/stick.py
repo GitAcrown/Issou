@@ -29,6 +29,20 @@ class Stick:
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
 
+    @utl.command(pass_context=True, hidden=True)
+    async def repare(self, ctx):
+        """Permet de réparer son compte UTL."""
+        author = ctx.message.author
+        for stk in self.user[author.id]["FAVORIS"]:
+            if "[P]" in stk:
+                clean = stk[:-4]
+                self.user[author.id]["FAVORIS"].remove(stk)
+                self.user[author.id]["FAVORIS"].append(clean)
+            else:
+                pass
+        else:
+            await self.bot.say("Compte réparé.")
+
     @utl.command(pass_context=True)
     async def coll(self, ctx, nom):
         """Permet d'ajouter un sticker à sa collection."""
@@ -185,6 +199,7 @@ class Stick:
         Si l'affichage n'est pas précisé, sera réglé sur UPLOAD"""
         nom = nom.lower()
         cat = cat.upper()
+        author = ctx.message.author
         if "NONE" not in self.img["CATEGORIE"]:
             self.img["CATEGORIE"]["NONE"] = {"NOM" : "NONE", "DESC" : "Sans catégories"}
         if aff == None:
@@ -215,9 +230,6 @@ class Stick:
                                                 "CAT": cat,
                                                 "AFF": aff,
                                                 "POP": 0}
-                    nommod = nom + " [P]"
-                    self.user[ctx.message.author.id]["FAVORIS"].append(nommod)
-                    fileIO("data/stick/user.json","save",self.user)
                     fileIO("data/stick/img.json","save",self.img)
                     await self.bot.say("Fichier **{}** enregistré localement.".format(filename))
                 except Exception as e:
