@@ -107,13 +107,13 @@ class Stick:
             await self.bot.say("Vous n'avez pas de suivi.")
 
     @commands.group(pass_context=True) #STICKERS
-    @checks.mod_or_permissions(kick_members=True)
     async def stk(self, ctx):
         """Gestion des stickers."""
         if ctx.invoked_subcommand is None:
             await send_cmd_help(ctx)
 
     @stk.command(pass_context=True, hidden=True)
+    @checks.mod_or_permissions(kick_members=True)
     async def imp(self, ctx):
         """Permet d'importer les stickers de l'ancien module."""
         if "NONE" not in self.img["CATEGORIE"]:
@@ -178,6 +178,7 @@ class Stick:
         await self.bot.say(umsg)
 
     @stk.command(aliases = ["a"],pass_context=True)
+    @checks.mod_or_permissions(kick_members=True)
     async def add(self, ctx, nom, cat, url, aff=None):
         """Permet de créer un sticker pour le serveur.
 
@@ -233,6 +234,7 @@ class Stick:
                 await self.bot.whisper(msg)
 
     @stk.command(aliases = ["e"],pass_context=True)
+    @checks.mod_or_permissions(kick_members=True)
     async def edit(self, ctx, nom, cat, aff=None, url=None):
         """Permet de changer des données liées à un sticker.
 
@@ -267,6 +269,7 @@ class Stick:
                 await self.bot.whisper(msg)
 
     @stk.command(aliases = ["d"],pass_context=True)
+    @checks.mod_or_permissions(kick_members=True)
     async def delete(self, ctx, nom):
         """Permet d'effacer définitivement un sticker."""
         nom = nom.lower()
