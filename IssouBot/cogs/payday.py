@@ -151,7 +151,7 @@ class Payday:
                                 wait_time = int(wait / 2)
                                 half_time = int(wait_time / 2)
                                 split_time = int(half_time / 2)
-                                wait_time = int(split_time / 2)
+                                plus_time = int(split_time / 2)
                                 await self.bot.change_status(discord.Game(name="Payday"))
                                 await self.bot.say( r.mention + " **Une partie de Payday à été lancé par " + user.name + "**" +
                                                    "\n" + "*" + str(wait) + " secondes avant que ça ne commence*")
@@ -167,7 +167,7 @@ class Payday:
                                     self.system["Config"]["Bankheist Running"] = "Yes"
                                     fileIO("data/bankheist/system.json", "save", self.system)
                                     bank = self.check_banks()
-                                    await asyncio.sleep(wait_time)
+                                    await asyncio.sleep(plus_time)
                                     await self.bot.say("**Le crew à décidé de viser " + bank + "**")
                                     j = self.game_outcomes()
                                     j_temp = j[:]
