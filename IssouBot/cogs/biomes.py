@@ -28,10 +28,10 @@ except:
 
 # DIALOGUES UNIVERSEL
 etats = ["Sain","Malade","Blessé","Empoisonné"]
-d_repos = ["**{0}** se repose dans **{1}**","**{0}** trouve **{1}** et décide de s'y reposer","**{0}** tombe et découvre **{1}**","**{0}** décide de s'abriter dans **{1}**"]
-d_chasse = ["**{0}** se décide à chasser **{1}** passant à proximité","**{0}** se met à courser **{1}**","**{0}** dévore **{1}** chassé juste avant","**{0}** mange **{1}**"]
-d_cueil = ["**{0}** récolte **{1}**","**{0}** trouve **{1}**","**{0}** ramasse **{1}**"]
-d_trouve = ["**{0}** trouve **{1}** et s'en équippe (*{2}*)","**{0}** trébuche sur **{1}** et le ramasse (*{2}*)","**{0}** trouve **{1}** accroché (*{2}*)","**{0}** vole **{1}** dans un sac (*{2}*)"]
+d_repos = ["**{0}** se repose dans **{1}**","**{0}** trouve **{1}** et décide de s'y reposer","**{0}** tombe et découvre **{1}**","**{0}** décide de s'abriter dans **{1}**", "**{0}** s'abrite d'urgence dans **{1}**"]
+d_chasse = ["**{0}** se décide à chasser **{1}** passant à proximité","**{0}** se met à courser **{1}**","**{0}** dévore **{1}** chassé juste avant","**{0}** mange **{1}**","**{0}** descend **{1}**"]
+d_cueil = ["**{0}** récolte **{1}**","**{0}** trouve **{1}**","**{0}** ramasse **{1}**","**{0}** arrache **{1}**"]
+d_trouve = ["**{0}** trouve **{1}** et s'en équippe (*{2}*)","**{0}** trébuche sur **{1}** et le ramasse (*{2}*)","**{0}** trouve **{1}** accroché (*{2}*)","**{0}** vole **{1}** dans un sac (*{2}*)","**{0}** trouve **{1}** sur le sol (*{2}*)"]
 d_reposgrp = ["**{0}**, **{1}** et **{2}** décident de se reposer dans **{3}**","**{1}** se rassemble avec **{0}** et **{2}** dans **{3}** pour discuter autour d'un feu.","**{1}** se regroupe avec **{0}** et **{2}** dans **{3}** pour se poser tranquillement."]
 d_combat = ["**{0}** et **{1}** se provoquent en duel","**{1}** attaque **{0}** par surprise","**{0}**, frappé par **{1}**, réplique","**{1}** se met à poursuivre **{0}**"]
 d_combat2 = ["**{0}** et **{1}** prennent par surprise **{2}** et **{3}** qui étaient tranquillement en train de camper","**{2}** et **{3}** prennent en chasse **{1}** et **{0}** !"]
@@ -206,6 +206,7 @@ class Biomes:
                                         self.sponsor[author.id]["ITEM"] = e
                                         self.save("sponsor")
                                         await self.bot.whisper("**Don enregistré.**\n*{} sera donné à {} à la prochaine heure.*".format(e, user.name))
+                                        await self.bot.say("**Don enregisté.** Il sera reçu par le joueur dans peu de temps.")
                                         return
                                     else:
                                         await self.bot.whisper("Le joueur n'est pas en train de jouer.")
@@ -492,7 +493,7 @@ class Biomes:
                                                 atx += "\n*{} se rétabli de sa maladie*".format(play2m.name)
                                                 self.player[play2]["ETAT"] = "Sain"
                                             if self.player[play3]["ETAT"] == "Malade":
-                                                atx += "\n*{} se rétabli de sa maladie*".format(play3.name)
+                                                atx += "\n*{} se rétabli de sa maladie*".format(play3m.name)
                                                 self.player[play3]["ETAT"] = "Sain"
                                             self.save("player")
                                         else:
