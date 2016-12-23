@@ -35,6 +35,6 @@ OBD/une planche de bois
 OBD/un enfant cancéreux
 OBD/un spray anti-insectes
 BNS/des bandages
-BNS/une pomade
+BNS/une pommade
 BNS/un doliprane
 BNS/un pansement
